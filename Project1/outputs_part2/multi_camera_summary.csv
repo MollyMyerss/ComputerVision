@@ -1,0 +1,3 @@
+label,file,loader,kind,raw_black_level,raw_white_level,noise_mu_patch,noise_sigma_patch,focal_length_mm,sensor_width_mm,h_fov_deg,note
+Main,Normal.dng,rawpy,raw_mosaic,528.0,4095.0,130.73187255859375,70.2647705078125,5.7,,,sensor_width_mm missing (set fallback)
+Telephoto,Zoom.dng,PIL,gray_from_rgb,1.5655999183654785,197.76219177246094,91.5067138671875,23.739173889160156,,,,sensor_width_mm missing (set fallback)
