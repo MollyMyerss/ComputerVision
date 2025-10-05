@@ -55,7 +55,7 @@ def main():
     print("Scanning for cameras (this helps if you want to use your iPhone/Continuity Camera)…")
     candidates = probe_cameras()
     if not candidates:
-        print("No camera found. If you're on macOS, ensure app has camera permission.")
+        print("No camera found.")
         sys.exit(1)
 
     print("\nAvailable camera indices:", candidates)
@@ -71,7 +71,7 @@ def main():
     kernel_name = '0: none'
     emboss_bias = 128
 
-    window_name = "Webcam (left: color, right: filtered) — keys 0..6, q=quit"  # CHANGED
+    window_name = "Webcam (left: color, right: filtered) — keys 0..6, q=quit"  
     cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
 
     prev_time = time.time()

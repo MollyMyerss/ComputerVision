@@ -9,7 +9,6 @@ LIGHT_GLOB = "images/light/*.dng"
 OUT_DIR    = "outputs"
 
 def _get_raw_frame(rp):
-    """Return a float32 RAW mosaic/visible plane from a rawpy object."""
     if hasattr(rp, "raw_image_visible") and rp.raw_image_visible is not None:
         arr = rp.raw_image_visible.astype(np.float32)
     else:
@@ -17,7 +16,6 @@ def _get_raw_frame(rp):
     return arr
 
 def _get_black_white(rp, arr):
-    """Return (black_level, white_level) to normalize hist range."""
     try:
         blk = float(np.mean(rp.black_level_per_channel))
     except Exception:
@@ -31,11 +29,6 @@ def _get_black_white(rp, arr):
     return blk, wht
 
 def load_raw_gray(path, central_crop=0.1, normalize=False):
-    """
-    Load RAW with rawpy, return float32 array.
-    - central_crop: fraction trimmed on each border (0.1 = keep central 80%).
-    - normalize: if True, subtract black and clip to [0, white-black].
-    """
     with rawpy.imread(path) as rp:
         raw = _get_raw_frame(rp)
         blk, wht = _get_black_white(rp, raw)
@@ -48,7 +41,6 @@ def load_raw_gray(path, central_crop=0.1, normalize=False):
 
 
 def patch_stats(img, top=None, left=None, size=128):
-    """Mean/std over a square patch; defaults to centered patch."""
     H, W = img.shape
     if top is None or left is None:
         top  = max(0, (H - size) // 2)
@@ -71,11 +63,6 @@ def summarize(glob_pat, label, normalize=False):
 
 
 def compute_hist_ranges(sample_path, dark_span=800.0, dark_pad=200.0):
-    """
-    Returns (rng_dark, rng_light) using RAW metadata.
-    - rng_light: [black_level, white_level]
-    - rng_dark : [black_level - pad, black_level + span] (coarse default)
-    """
     with rawpy.imread(sample_path) as rp:
         arr = _get_raw_frame(rp).astype(np.float32)
         blk, wht = _get_black_white(rp, arr)
@@ -114,27 +101,22 @@ def main():
                          f"  DARK_GLOB  = {DARK_GLOB}\n"
                          f"  LIGHT_GLOB = {LIGHT_GLOB}")
 
-    # Save stats
     pd.DataFrame(dark_rows,  columns=["file","mean","std"]).to_csv(os.path.join(OUT_DIR, "dark_stats.csv"),  index=False)
     pd.DataFrame(light_rows, columns=["file","mean","std"]).to_csv(os.path.join(OUT_DIR, "light_stats.csv"), index=False)
 
-    # Ranges:
-    rng_dark = (500.0, 600.0)  # fixed tight window for dark frames
-    _, rng_light = compute_hist_ranges(light_files[0])  # metadata-driven for light
+    rng_dark = (500.0, 600.0) 
+    _, rng_light = compute_hist_ranges(light_files[0])  
 
     print("\nHistogram ranges -> dark:", rng_dark, " light:", rng_light)
 
-    # DARK: now using COUNTS (density=False). Keep log y if you like.
     plot_histograms(dark_files, "Dark-Frame Histograms",
                     rng=rng_dark, bins=1024, logy=True, density=False)
     plt.savefig(os.path.join(OUT_DIR, "dark_hist.png"), dpi=200); plt.clf()
 
-    # LIGHT: counts (already), linear y
     plot_histograms(light_files, "Light/Flat Histograms",
                     rng=rng_light, bins=512, logy=False, density=False)
     plt.savefig(os.path.join(OUT_DIR, "bright_hist.png"), dpi=200); plt.clf()
 
-    # console summary
     d_mu = np.mean([r[1] for r in dark_rows]);  d_sd = np.mean([r[2] for r in dark_rows])
     l_mu = np.mean([r[1] for r in light_rows]); l_sd = np.mean([r[2] for r in light_rows])
     print(f"\nAverages — Dark μ={d_mu:.1f}, σ={d_sd:.1f} | Bright μ={l_mu:.1f}, σ={l_sd:.1f}")
